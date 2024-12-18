@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Realistic Car Game</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+        }
+        #gameCanvas {
+            display: block;
+            margin: 0 auto;
+            background: #222;
+        }
+        .score {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: Arial, sans-serif;
+            font-size: 24px;
+            color: white;
+            text-shadow: 0 0 10px #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="score">Score: <span id="score">0</span></div>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const carImage = new Image();
+        carImage.src = 'https://static.vecteezy.com/system/resources/previews/019/168/338/original/race-car-isolated-on-transparent-background-3d-rendering-illustration-free-png.png'; // Replace with your car image URL
+
+        const npcCarImage = new Image();
+        npcCarImage.src = 'https://static.vecteezy.com/system/resources/previews/019/066/134/original/sport-car-isolated-on-transparent-background-3d-rendering-illustration-free-png.png'; // Replace with your NPC car image URL
+
+        const roadBackground = new Image();
+        roadBackground.src = 'https://3.bp.blogspot.com/-4w50fIyVKjU/UsoEajqKl_I/AAAAAAAACNU/p8FMHm4BwCQ/s1600/road.jpg'; // Replace with road image URL
+
+        let roadY = 0;
+        const car = { x: 375, y: 500, width: 50, height: 100, speed: 5 };
+        const npcCars = [];
+        let score = 0;
+        let gameOver = false;
+
+        const keys = {};
+        const scoreDisplay = document.getElementById('score');
+
+        // Function to create NPC cars
+        function createNpcCars() {
+            for (let i = 0; i < 3; i++) {
+                npcCars.push({
+                    x: Math.random() * (canvas.width - 50),
+                    y: Math.random() * -canvas.height,
+                    width: 50,
+                    height: 100,
+                    speed: 3 + Math.random() * 2
+                });
+            }
+        }
+
+        // Function to draw the road background
+        function drawRoad() {
+            ctx.drawImage(roadBackground, 0, roadY, canvas.width, canvas.height);
+            ctx.drawImage(roadBackground, 0, roadY - canvas.height, canvas.width, canvas.height);
+            roadY += 5; // Adjust speed of background
+            if (roadY >= canvas.height) {
+                roadY = 0;
+            }
+        }
+
+        // Function to draw the player's car
+        function drawCar() {
+            ctx.drawImage(carImage, car.x, car.y, car.width, car.height);
+        }
+
+        // Function to draw NPC cars
+        function drawNpcCars() {
+            npcCars.forEach(npc => {
+                ctx.drawImage(npcCarImage, npc.x, npc.y, npc.width, npc.height);
+            });
+        }
+
+        // Function to update NPC cars
+        function updateNpcCars() {
+            npcCars.forEach(npc => {
+                npc.y += npc.speed;
+
+                // Reset NPC car position if it goes off screen
+                if (npc.y > canvas.height) {
+                    npc.y = Math.random() * -canvas.height;
+                    npc.x = Math.random() * (canvas.width - 50);
+                    score += 1;
+                    scoreDisplay.innerText = score;
+                }
+
+                // Check for collisions
+                if (
+                    car.x < npc.x + npc.width &&
+                    car.x + car.width > npc.x &&
+                    car.y < npc.y + npc.height &&
+                    car.y + car.height > npc.y
+                ) {
+                    gameOver = true;
+                }
+            });
+        }
+
+        // Function to move the player's car
+        function moveCar() {
+            if (keys['ArrowLeft'] && car.x > 0) car.x -= car.speed;
+            if (keys['ArrowRight'] && car.x + car.width < canvas.width) car.x += car.speed;
+            if (keys['ArrowUp'] && car.y > 0) car.y -= car.speed;
+            if (keys['ArrowDown'] && car.y + car.height < canvas.height) car.y += car.speed;
+        }
+
+        // Game loop
+        function gameLoop() {
+            if (gameOver) {
+                ctx.font = '30px Arial';
+                ctx.fillStyle = 'red';
+                ctx.fillText('Game Over!', canvas.width / 2 - 80, canvas.height / 2);
+                ctx.fillText(`Score: ${score}`, canvas.width / 2 - 50, canvas.height / 2 + 40);
+                return;
+            }
+
+            // Draw road background
+            drawRoad();
+
+            // Move the car
+            moveCar();
+
+            // Draw the player's car
+            drawCar();
+
+            // Draw and update NPC cars
+            drawNpcCars();
+            updateNpcCars();
+
+            // Request the next frame
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Initialize game
+        function init() {
+            createNpcCars();
+            gameLoop();
+        }
+
+        // Keyboard event listeners
+        window.addEventListener('keydown', e => (keys[e.key] = true));
+        window.addEventListener('keyup', e => (keys[e.key] = false));
+
+        init();
+    </script>
+</body>
+</html>
+
